@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@flowscripter/pluggable-io-framework-plugin-filesystem",
+      "name": "@flowscripter/io-plugin-filesystem",
       "dependencies": {
         "@flowscripter/pluggable-io-framework-api": "^1.0.1",
         "zod": "^4.4.3",

@@ -1,5 +1,5 @@
 {
-  "name": "@flowscripter/pluggable-io-framework-plugin-filesystem",
+  "name": "@flowscripter/io-plugin-filesystem",
   "version": "0.1.0",
   "description": "Local filesystem source/sink plugin for https://github.com/flowscripter/pluggable-io-framework",
   "keywords": [
@@ -9,11 +9,11 @@
     "io",
     "plugin"
   ],
-  "homepage": "https://github.com/flowscripter/pluggable-io-framework-plugin-filesystem#readme",
+  "homepage": "https://github.com/flowscripter/io-plugin-filesystem#readme",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flowscripter/pluggable-io-framework-plugin-filesystem.git"
+    "url": "git+https://github.com/flowscripter/io-plugin-filesystem.git"
   },
   "files": [
     "dist/",
