@@ -57,6 +57,11 @@ describe("FilesystemIOProvider", () => {
   });
 
   test("setProperties applies mode", async () => {
+    // NTFS has no POSIX permission bits - chmod on Windows only toggles a
+    // read-only flag, so exact bit equality is only meaningful elsewhere.
+    if (process.platform === "win32") {
+      return;
+    }
     await writeFile(join(root, "a.txt"), "a");
     await provider.setProperties("a.txt", { mode: 0o600 });
     const properties = await provider.getProperties("a.txt");
