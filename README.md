@@ -1,9 +1,9 @@
-# pluggable-io-framework-plugin-filesystem
+# io-plugin-filesystem
 
-[![version](https://img.shields.io/github/v/release/flowscripter/pluggable-io-framework-plugin-filesystem?sort=semver)](https://github.com/flowscripter/pluggable-io-framework-plugin-filesystem/releases)
-[![build](https://img.shields.io/github/actions/workflow/status/flowscripter/pluggable-io-framework-plugin-filesystem/release-bun-library.yml)](https://github.com/flowscripter/pluggable-io-framework-plugin-filesystem/actions/workflows/release-bun-library.yml)
-[![docs](https://img.shields.io/badge/docs-API-blue)](https://flowscripter.github.io/pluggable-io-framework-plugin-filesystem/index.html)
-[![license: MIT](https://img.shields.io/github/license/flowscripter/pluggable-io-framework-plugin-filesystem)](https://github.com/flowscripter/pluggable-io-framework-plugin-filesystem/blob/main/LICENSE)
+[![version](https://img.shields.io/github/v/release/flowscripter/io-plugin-filesystem?sort=semver)](https://github.com/flowscripter/io-plugin-filesystem/releases)
+[![build](https://img.shields.io/github/actions/workflow/status/flowscripter/io-plugin-filesystem/release-bun-library.yml)](https://github.com/flowscripter/io-plugin-filesystem/actions/workflows/release-bun-library.yml)
+[![docs](https://img.shields.io/badge/docs-API-blue)](https://flowscripter.github.io/io-plugin-filesystem/index.html)
+[![license: MIT](https://img.shields.io/github/license/flowscripter/io-plugin-filesystem)](https://github.com/flowscripter/io-plugin-filesystem/blob/main/LICENSE)
 
 > Local filesystem source/sink plugin for
 > [pluggable-io-framework](https://github.com/flowscripter/pluggable-io-framework),
@@ -41,7 +41,7 @@ instantiates plugins. Direct usage of the bundle:
 ```typescript
 import filesystemPlugin, {
   filesystemIOProviderFactory,
-} from "https://unpkg.com/@flowscripter/pluggable-io-framework-plugin-filesystem/dist/bundle.js";
+} from "https://unpkg.com/@flowscripter/io-plugin-filesystem/dist/bundle.js";
 
 const provider = await filesystemIOProviderFactory.createProvider({ rootPath: "/data" });
 ```
@@ -88,7 +88,7 @@ for the contract and orchestration this plugin implements.
 
 Link to auto-generated API docs:
 
-[API Documentation](https://flowscripter.github.io/pluggable-io-framework-plugin-filesystem/index.html)
+[API Documentation](https://flowscripter.github.io/io-plugin-filesystem/index.html)
 
 ## License
 

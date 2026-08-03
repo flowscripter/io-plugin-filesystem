@@ -49,10 +49,10 @@ beforeAll(async () => {
   repository = new LocalFolderPluginRepository(pluginFolder, "manifest.json");
   await repository.writeManifest([
     {
-      pluginId: "pluggable-io-framework-plugin-filesystem",
+      pluginId: "io-plugin-filesystem",
       bundlePath,
       extensionPoints: [PLUGGABLE_IO_FRAMEWORK_PROVIDER_FACTORY_EXTENSION_POINT],
-      name: "pluggable-io-framework-plugin-filesystem",
+      name: "io-plugin-filesystem",
       version: "0.1.0",
     },
   ]);
