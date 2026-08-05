@@ -31,6 +31,12 @@
   `dynamic-plugin-framework` via `import()` - proven end to end in this
   repo's tests via a real `LocalFolderPluginRepository`, not just
   type-checking.
+- Discoverable via `NpmPluginRepository` (the mechanism behind
+  `dynamic-cli-framework`'s `plugin add`/`plugin list` commands): the
+  package.json `pluggable-io-framework` field declares this package's
+  extension points, so once installed into a CLI's local plugin store it is
+  found without the consuming CLI needing a direct npm dependency on it -
+  also proven end to end in this repo's tests, not just type-checking.
 
 ## Bundled Bun Module Usage
 
