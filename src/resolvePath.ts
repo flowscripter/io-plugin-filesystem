@@ -8,7 +8,8 @@ import { resolve, sep } from "node:path";
 export function resolvePath(rootPath: string, relativePath: string): string {
   const resolvedRoot = resolve(rootPath);
   const resolvedPath = resolve(resolvedRoot, relativePath);
-  if (resolvedPath !== resolvedRoot && !resolvedPath.startsWith(resolvedRoot + sep)) {
+  const rootPrefix = resolvedRoot.endsWith(sep) ? resolvedRoot : resolvedRoot + sep;
+  if (resolvedPath !== resolvedRoot && !resolvedPath.startsWith(rootPrefix)) {
     throw new Error(`Path "${relativePath}" resolves outside provider root "${rootPath}"`);
   }
   return resolvedPath;
