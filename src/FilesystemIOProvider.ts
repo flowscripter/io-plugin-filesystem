@@ -54,14 +54,17 @@ async function* walk(rootPath: string, relDir: string, recursive: boolean): Asyn
 /**
  * Local filesystem source/sink provider. All paths are resolved and
  * sandboxed against `rootPath` via {@link resolvePath} - a path that would
- * escape the root is rejected rather than followed.
+ * escape the root is rejected rather than followed. `rootPath === ""` means
+ * "no restriction" (see {@link resolvePath}) - preserved here rather than
+ * eagerly resolved, since `resolve("")` would otherwise collapse it to
+ * `cwd` before `resolvePath` ever sees the sentinel.
  */
 export class FilesystemIOProvider implements IOProvider {
   public readonly kind = ChunkKind.Js;
   public readonly rootPath: string;
 
   public constructor(rootPath: string) {
-    this.rootPath = resolve(rootPath);
+    this.rootPath = rootPath === "" ? "" : resolve(rootPath);
   }
 
   public async [Symbol.asyncDispose](): Promise<void> {

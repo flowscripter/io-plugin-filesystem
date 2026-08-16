@@ -29,4 +29,17 @@ describe("resolvePath", () => {
     const filesystemRoot = resolve(sep);
     expect(resolvePath(filesystemRoot, ".")).toBe(filesystemRoot);
   });
+
+  test('rootPath "" accepts any absolute path, including ones outside resolve(sep)', () => {
+    // resolve(sep) only spans the current drive on Windows - the "" sentinel
+    // must genuinely mean "no restriction" everywhere, not just within one
+    // drive's root. Simulate a path on a different drive than cwd's.
+    const otherDrivePath =
+      process.platform === "win32" ? "E:\\somewhere\\file.txt" : "/somewhere/file.txt";
+    expect(resolvePath("", otherDrivePath)).toBe(resolve(otherDrivePath));
+  });
+
+  test('rootPath "" resolves a relative path against cwd, like plain resolve()', () => {
+    expect(resolvePath("", "a.txt")).toBe(resolve("a.txt"));
+  });
 });
