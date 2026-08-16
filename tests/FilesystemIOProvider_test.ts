@@ -90,6 +90,18 @@ describe("FilesystemIOProvider", () => {
     expect(threw).toBe(true);
   });
 
+  test('rootPath="" gives unrestricted access, even to paths outside the constructed root', async () => {
+    // Regression test: the constructor previously called resolve(rootPath)
+    // unconditionally, which collapsed "" to cwd before resolvePath ever
+    // saw the "unrestricted" sentinel - resolvePath's own unit tests alone
+    // didn't catch this, since they call resolvePath directly.
+    const unrestricted = new FilesystemIOProvider("");
+    await writeFile(join(root, "outside.txt"), "hello");
+
+    const properties = await unrestricted.getProperties(join(root, "outside.txt"));
+    expect(properties.size).toBe(5);
+  });
+
   test("multipart write then multipart read round-trips a large file", async () => {
     const original = new TextEncoder().encode("x".repeat(30));
     const writer = provider.getMultipartWriter("big.bin");

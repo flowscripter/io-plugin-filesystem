@@ -16,7 +16,11 @@
   [pluggable-io-framework-api](https://github.com/flowscripter/pluggable-io-framework-api)
   for the local filesystem - both source and sink.
 - Config: `{ rootPath: string }` (validated with Zod). All paths passed to
-  provider methods are resolved and sandboxed against `rootPath`.
+  provider methods are resolved and sandboxed against `rootPath` - a path
+  that would escape it is rejected. `rootPath: ""` is an explicit sentinel
+  for "no restriction" (full filesystem access), since POSIX `"/"` isn't a
+  meaningful "everything" root on Windows (multiple drive letters, no
+  single filesystem root).
 - `list` (recursive, regex-filterable), `getProperties`/`setProperties`
   (size/lastModified/isFolder plus a `mode` extension property),
   `delete`, plain readable/writable streams, and multipart read/write
