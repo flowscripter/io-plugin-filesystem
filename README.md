@@ -16,8 +16,7 @@
   [pluggable-io-framework-api](https://github.com/flowscripter/pluggable-io-framework-api)
   for the local filesystem - both source and sink.
 - Config: `{ rootPath: string }` (validated with Zod). All paths passed to
-  provider methods are resolved and sandboxed against `rootPath` - a path
-  that would escape the root (e.g. `../../etc/passwd`) is rejected.
+  provider methods are resolved and sandboxed against `rootPath`.
 - `list` (recursive, regex-filterable), `getProperties`/`setProperties`
   (size/lastModified/isFolder plus a `mode` extension property),
   `delete`, plain readable/writable streams, and multipart read/write
