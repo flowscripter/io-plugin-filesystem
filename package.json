@@ -22,7 +22,11 @@
   ],
   "type": "module",
   "module": "dist/bundle.js",
-  "exports": "./dist/bundle.js",
+  "exports": {
+    ".": {
+      "default": "./dist/bundle.js"
+    }
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -44,6 +48,11 @@
   "peerDependencies": {
     "@flowscripter/dynamic-plugin-framework": "*",
     "typescript": "^6.0.3"
+  },
+  "pluggable-io-framework": {
+    "extensionPoints": [
+      "@flowscripter/pluggable-io-framework/provider-factory"
+    ]
   },
   "typedocOptions": {
     "readme": "none",

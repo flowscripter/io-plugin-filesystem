@@ -16,8 +16,7 @@
   [pluggable-io-framework-api](https://github.com/flowscripter/pluggable-io-framework-api)
   for the local filesystem - both source and sink.
 - Config: `{ rootPath: string }` (validated with Zod). All paths passed to
-  provider methods are resolved and sandboxed against `rootPath` - a path
-  that would escape the root (e.g. `../../etc/passwd`) is rejected.
+  provider methods are resolved and sandboxed against `rootPath`.
 - `list` (recursive, regex-filterable), `getProperties`/`setProperties`
   (size/lastModified/isFolder plus a `mode` extension property),
   `delete`, plain readable/writable streams, and multipart read/write
@@ -31,6 +30,12 @@
   `dynamic-plugin-framework` via `import()` - proven end to end in this
   repo's tests via a real `LocalFolderPluginRepository`, not just
   type-checking.
+- Discoverable via `NpmPluginRepository` (the mechanism behind
+  `dynamic-cli-framework`'s `plugin add`/`plugin list` commands): the
+  package.json `pluggable-io-framework` field declares this package's
+  extension points, so once installed into a CLI's local plugin store it is
+  found without the consuming CLI needing a direct npm dependency on it -
+  also proven end to end in this repo's tests, not just type-checking.
 
 ## Bundled Bun Module Usage
 
