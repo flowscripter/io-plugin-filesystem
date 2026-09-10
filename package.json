@@ -36,15 +36,15 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@flowscripter/pluggable-io-framework-api": "^1.0.8",
-    "zod": "^4.5.4"
+    "@flowscripter/pluggable-io-framework-api": "^1.0.9",
+    "zod": "^4.6.1"
   },
   "devDependencies": {
-    "@flowscripter/dynamic-plugin-framework": "^2.2.6",
-    "@types/bun": "^1.4.1",
+    "@flowscripter/dynamic-plugin-framework": "^2.2.7",
+    "@types/bun": "^1.4.2",
     "@types/node": "^26.4.1",
-    "oxfmt": "0.66.0",
-    "oxlint": "1.81.0"
+    "oxfmt": "0.67.0",
+    "oxlint": "1.82.0"
   },
   "peerDependencies": {
     "@flowscripter/dynamic-plugin-framework": "*",
