@@ -5,7 +5,7 @@
     "": {
       "name": "@flowscripter/io-plugin-filesystem",
       "dependencies": {
-        "@flowscripter/pluggable-io-framework-api": "^1.0.9",
+        "@flowscripter/pluggable-io-framework-api": "^1.1.0",
         "zod": "^4.6.1",
       },
       "devDependencies": {
@@ -24,7 +24,7 @@
   "packages": {
     "@flowscripter/dynamic-plugin-framework": ["@flowscripter/dynamic-plugin-framework@2.2.7", "", { "dependencies": { "semver": "^7.8.5" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-4JQHQTQ58yReGUy9Nd41ooyvNU8G+LxMODTmJeURckigcIsGZvjNuAaJapFWK01PAQwp0baw7bDCdKC3qKUzBA=="],
 
-    "@flowscripter/pluggable-io-framework-api": ["@flowscripter/pluggable-io-framework-api@1.0.9", "", { "dependencies": { "zod": "^4.6.1", "zod-to-json-schema": "^3.25.2" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-MyVaTD94kk8YUZfc2ont83EPLH6uCIdOqL/xFVUmNvDNidsqesLqF/1u8eC5UEcNmeHJrMhRkr0HtCrfwokeiA=="],
+    "@flowscripter/pluggable-io-framework-api": ["@flowscripter/pluggable-io-framework-api@1.1.0", "", { "dependencies": { "zod": "^4.6.1", "zod-to-json-schema": "^3.25.2" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-Io/GZK1cs55r5TLClQT7g36k7KjLBUZAFcJhc16c/159D/etpahTpmUG3LxlwA/VAnbi9uen1BefNH0EoU2+kQ=="],
 
     "@oxfmt/binding-android-arm-eabi": ["@oxfmt/binding-android-arm-eabi@0.67.0", "", { "os": "android", "cpu": "arm" }, "sha512-2olh3ioEmc4gRzQm7jxyB1b/PFBoFvTq8KdgYySeNpysDtA6DEg2Mvya4/I6flhL7G0eOrE8RD7JCNCIMhE16Q=="],
 
