@@ -15,21 +15,26 @@
 - Implements the `IOProviderFactory`/`IOProvider` contract from
   [pluggable-io-framework-api](https://github.com/flowscripter/pluggable-io-framework-api)
   for the local filesystem - both source and sink.
-- Config: `{ rootPath: string }` (validated with Zod). All paths passed to
-  provider methods are resolved and sandboxed against `rootPath` - a path
-  that would escape it is rejected. `rootPath: ""` is an explicit sentinel
-  for "no restriction" (full filesystem access), since POSIX `"/"` isn't a
+- Config: `{ rootPath?: string }` (validated with Zod) - `rootPath` is
+  optional, defaulting to `""`. All paths passed to provider methods are
+  resolved and sandboxed against `rootPath` - a path that would escape it is
+  rejected. `rootPath: ""` (or omitted) is an explicit sentinel for "no
+  restriction" (full filesystem access), since POSIX `"/"` isn't a
   meaningful "everything" root on Windows (multiple drive letters, no
   single filesystem root).
 - `list` (recursive, regex-filterable), `getProperties`/`setProperties`
   (size/lastModified/isFolder plus a `mode` extension property),
-  `delete`, plain readable/writable streams, and multipart read/write
-  (concurrent byte-range parts written directly to file offsets via a
-  single shared file handle).
+  `delete`, `createFolder`, plain readable/writable streams, and multipart
+  read/write (concurrent byte-range parts written directly to file offsets
+  via a single shared file handle) at a caller-supplied part size -
+  `getPartSizeConstraints` reports unconstrained bounds with an 8MB default,
+  since the local filesystem imposes no real part-size limits.
 - `canDirectTransfer`/`directCopy`/`directMove`: two `FilesystemIOProvider`
-  instances with the same `rootPath` copy/move directly (`copyFile`/
-  `rename`, with an `EXDEV` cross-device fallback to copy+unlink) instead of
-  streaming.
+  instances with the same `rootPath` copy/move directly (`cp`/`rename`, with
+  an `EXDEV` cross-device fallback to recursive copy+delete) instead of
+  streaming. `supportsRecursiveDirectTransfer` is `true` - a folder
+  `sourcePath` is copied/moved recursively in one `directCopy`/`directMove`
+  call, preserving empty subfolders.
 - Bundled (`bun build --target bun`) as a single-file plugin, loaded by
   `dynamic-plugin-framework` via `import()` - proven end to end in this
   repo's tests via a real `LocalFolderPluginRepository`, not just
