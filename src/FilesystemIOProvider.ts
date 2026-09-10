@@ -1,16 +1,5 @@
 import { createReadStream, createWriteStream } from "node:fs";
-import {
-  chmod,
-  copyFile,
-  mkdir,
-  open,
-  readdir,
-  rename,
-  rm,
-  stat,
-  unlink,
-  utimes,
-} from "node:fs/promises";
+import { chmod, cp, mkdir, open, readdir, rename, rm, stat, utimes } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { Readable } from "node:stream";
 import {
@@ -20,7 +9,9 @@ import {
   type ItemProperties,
   type JsChunk,
   type Part,
+  type PartSizeConstraints,
   type StreamHandle,
+  type TransferTelemetry,
 } from "@flowscripter/pluggable-io-framework-api";
 import { z } from "zod";
 import { resolvePath } from "./resolvePath.ts";
@@ -63,12 +54,16 @@ export class FilesystemIOProvider implements IOProvider {
   public readonly kind = ChunkKind.Js;
   public readonly rootPath: string;
 
-  public constructor(rootPath: string) {
+  public constructor(rootPath: string = "") {
     this.rootPath = rootPath === "" ? "" : resolve(rootPath);
   }
 
   public async [Symbol.asyncDispose](): Promise<void> {
     // No persistent OS handles held between calls - nothing to release.
+  }
+
+  public async createFolder(path: string): Promise<void> {
+    await mkdir(resolvePath(this.rootPath, path), { recursive: true });
   }
 
   public list(
@@ -141,14 +136,24 @@ export class FilesystemIOProvider implements IOProvider {
     return { kind: ChunkKind.Js, stream };
   }
 
-  public getMultipartReader(path: string): AsyncIterable<Part<ChunkKind>> {
+  public getPartSizeConstraints(_totalSize: number): PartSizeConstraints {
+    // The local filesystem imposes no real part-size limits.
+    return {
+      minPartSize: 0,
+      maxPartSize: Infinity,
+      maxParts: Infinity,
+      defaultPartSize: DEFAULT_PART_SIZE,
+    };
+  }
+
+  public getMultipartReader(path: string, partSize: number): AsyncIterable<Part<ChunkKind>> {
     const fullPath = resolvePath(this.rootPath, path);
     async function* generate(): AsyncGenerator<Part<ChunkKind>> {
       const stats = await stat(fullPath);
-      const partCount = Math.max(1, Math.ceil(stats.size / DEFAULT_PART_SIZE));
+      const partCount = Math.max(1, Math.ceil(stats.size / partSize));
       for (let index = 0; index < partCount; index += 1) {
-        const start = index * DEFAULT_PART_SIZE;
-        const end = Math.min(start + DEFAULT_PART_SIZE, stats.size) - 1;
+        const start = index * partSize;
+        const end = Math.min(start + partSize, stats.size) - 1;
         const webStream = Readable.toWeb(
           createReadStream(fullPath, { start, end: Math.max(start, end) }),
         ) as unknown as ReadableStream<Uint8Array>;
@@ -164,7 +169,10 @@ export class FilesystemIOProvider implements IOProvider {
     return generate();
   }
 
-  public getMultipartWriter(path: string): {
+  public getMultipartWriter(
+    path: string,
+    _partSize: number,
+  ): {
     write(parts: AsyncIterable<Part<ChunkKind>>): Promise<void>;
   } {
     const fullPath = resolvePath(this.rootPath, path);
@@ -201,13 +209,24 @@ export class FilesystemIOProvider implements IOProvider {
     return other instanceof FilesystemIOProvider && other.rootPath === this.rootPath;
   }
 
-  public async directCopy(sourcePath: string, destPath: string): Promise<void> {
+  /** Folder-aware: `directCopy`/`directMove` accept a folder `sourcePath` and recurse internally. */
+  public readonly supportsRecursiveDirectTransfer = true;
+
+  public async directCopy(
+    sourcePath: string,
+    destPath: string,
+    _telemetry?: TransferTelemetry,
+  ): Promise<void> {
     const fullDest = resolvePath(this.rootPath, destPath);
     await mkdir(join(fullDest, ".."), { recursive: true });
-    await copyFile(resolvePath(this.rootPath, sourcePath), fullDest);
+    await cp(resolvePath(this.rootPath, sourcePath), fullDest, { recursive: true });
   }
 
-  public async directMove(sourcePath: string, destPath: string): Promise<void> {
+  public async directMove(
+    sourcePath: string,
+    destPath: string,
+    _telemetry?: TransferTelemetry,
+  ): Promise<void> {
     const fullSource = resolvePath(this.rootPath, sourcePath);
     const fullDest = resolvePath(this.rootPath, destPath);
     await mkdir(join(fullDest, ".."), { recursive: true });
@@ -215,8 +234,8 @@ export class FilesystemIOProvider implements IOProvider {
       await rename(fullSource, fullDest);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "EXDEV") {
-        await copyFile(fullSource, fullDest);
-        await unlink(fullSource);
+        await cp(fullSource, fullDest, { recursive: true });
+        await rm(fullSource, { recursive: true, force: false });
         return;
       }
       throw error;

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { JsChunk } from "@flowscripter/pluggable-io-framework-api";
@@ -45,7 +45,6 @@ describe("FilesystemIOProvider", () => {
   test("list recursively and filters by regex", async () => {
     await writeFile(join(root, "a.txt"), "a");
     await writeFile(join(root, "b.md"), "b");
-    const { mkdir } = await import("node:fs/promises");
     await mkdir(join(root, "sub"));
     await writeFile(join(root, "sub", "c.txt"), "c");
 
@@ -104,7 +103,7 @@ describe("FilesystemIOProvider", () => {
 
   test("multipart write then multipart read round-trips a large file", async () => {
     const original = new TextEncoder().encode("x".repeat(30));
-    const writer = provider.getMultipartWriter("big.bin");
+    const writer = provider.getMultipartWriter("big.bin", 15);
     async function* parts() {
       const half = 15;
       for (const [index, [start, end]] of [
@@ -128,7 +127,7 @@ describe("FilesystemIOProvider", () => {
     await writer.write(parts());
 
     const collected: Uint8Array[] = [];
-    for await (const part of provider.getMultipartReader("big.bin")) {
+    for await (const part of provider.getMultipartReader("big.bin", 15)) {
       const reader = (part.stream as ReadableStream<JsChunk>).getReader();
       for (;;) {
         const { done, value } = await reader.read();
@@ -171,5 +170,66 @@ describe("FilesystemIOProvider", () => {
       threw = true;
     }
     expect(threw).toBe(true);
+  });
+
+  test("createFolder creates an empty folder, idempotently", async () => {
+    await provider.createFolder("empty/nested");
+    const properties = await provider.getProperties("empty/nested");
+    expect(properties.isFolder).toBe(true);
+    // mkdir -p style - calling again on an existing folder must not throw.
+    await provider.createFolder("empty/nested");
+  });
+
+  test("getPartSizeConstraints reports unconstrained bounds with an 8MB default", () => {
+    const constraints = provider.getPartSizeConstraints(1024 * 1024 * 1024);
+    expect(constraints.minPartSize).toBe(0);
+    expect(constraints.maxPartSize).toBe(Infinity);
+    expect(constraints.maxParts).toBe(Infinity);
+    expect(constraints.defaultPartSize).toBe(8 * 1024 * 1024);
+  });
+
+  test("supportsRecursiveDirectTransfer is true", () => {
+    expect(provider.supportsRecursiveDirectTransfer).toBe(true);
+  });
+
+  test("directCopy recursively copies a folder, including an empty subfolder", async () => {
+    await mkdir(join(root, "src"), { recursive: true });
+    await writeFile(join(root, "src", "a.txt"), "A");
+    await mkdir(join(root, "src", "nested"), { recursive: true });
+    await writeFile(join(root, "src", "nested", "b.txt"), "B");
+    await mkdir(join(root, "src", "emptyDir"), { recursive: true });
+
+    await provider.directCopy("src", "dest");
+
+    expect((await provider.getProperties("dest/a.txt")).size).toBe(1);
+    expect((await provider.getProperties("dest/nested/b.txt")).size).toBe(1);
+    expect((await provider.getProperties("dest/emptyDir")).isFolder).toBe(true);
+  });
+
+  test("directMove recursively relocates a folder", async () => {
+    await mkdir(join(root, "src"), { recursive: true });
+    await writeFile(join(root, "src", "a.txt"), "A");
+    await mkdir(join(root, "src", "nested"), { recursive: true });
+    await writeFile(join(root, "src", "nested", "b.txt"), "B");
+
+    await provider.directMove("src", "dest");
+
+    expect((await provider.getProperties("dest/a.txt")).size).toBe(1);
+    expect((await provider.getProperties("dest/nested/b.txt")).size).toBe(1);
+    let threw = false;
+    try {
+      await provider.getProperties("src");
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBe(true);
+  });
+
+  test("constructor rootPath defaults to the unrestricted sentinel", async () => {
+    const unrestricted = new FilesystemIOProvider();
+    await writeFile(join(root, "outside.txt"), "hello");
+
+    const properties = await unrestricted.getProperties(join(root, "outside.txt"));
+    expect(properties.size).toBe(5);
   });
 });
