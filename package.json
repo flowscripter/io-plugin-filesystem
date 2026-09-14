@@ -36,13 +36,13 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@flowscripter/pluggable-io-framework-api": "^1.1.0",
-    "zod": "^4.6.1"
+    "@flowscripter/pluggable-io-framework-api": "^1.1.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@flowscripter/dynamic-plugin-framework": "^2.2.7",
+    "@flowscripter/dynamic-plugin-framework": "^2.2.9",
     "@types/bun": "^1.4.2",
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.5.1",
     "oxfmt": "0.67.0",
     "oxlint": "1.82.0"
   },
