@@ -90,10 +90,10 @@ describe("FilesystemIOProvider", () => {
   });
 
   test('rootPath="" gives unrestricted access, even to paths outside the constructed root', async () => {
-    // Regression test: the constructor previously called resolve(rootPath)
-    // unconditionally, which collapsed "" to cwd before resolvePath ever
-    // saw the "unrestricted" sentinel - resolvePath's own unit tests alone
-    // didn't catch this, since they call resolvePath directly.
+    // Exercises the constructor, not just resolvePath: calling resolve(rootPath)
+    // unconditionally would collapse "" to cwd before resolvePath ever saw the
+    // "unrestricted" sentinel, which resolvePath's own unit tests can't detect
+    // since they call resolvePath directly.
     const unrestricted = new FilesystemIOProvider("");
     await writeFile(join(root, "outside.txt"), "hello");
 
