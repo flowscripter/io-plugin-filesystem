@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { PayloadKind, type ProviderContext } from "@flowscripter/pluggable-io-framework-api";
 import { filesystemIOProviderFactory } from "../src/FilesystemIOProviderFactory.ts";
 
@@ -37,7 +38,9 @@ describe("filesystemIOProviderFactory", () => {
   });
 
   test("parses a file URL into an entry target via the location schema", () => {
-    const raw = filesystemIOProviderFactory.parseLocationString("file:///tmp") as object;
+    const raw = filesystemIOProviderFactory.parseLocationString(
+      pathToFileURL(tmpdir()).href,
+    ) as object;
     const location = filesystemIOProviderFactory.locationSchema.parse({
       ...raw,
       filename: "a.txt",
