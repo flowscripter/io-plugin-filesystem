@@ -36,7 +36,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@flowscripter/pluggable-io-framework-api": "^1.1.6",
+    "@flowscripter/pluggable-io-framework-api": "^2.0.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
