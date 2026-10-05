@@ -11,17 +11,16 @@ describe("toFileProviderInputs", () => {
   });
 
   test("pattern gives a pattern target", () => {
-    expect(toFileProviderInputs({ path: "/data", pattern: "*.txt" }).target).toEqual({
-      kind: "pattern",
-      containerKey: "/data",
-      pattern: "*.txt",
+    expect(toFileProviderInputs({ path: "/data", pattern: "*.txt" })).toEqual({
+      config: { rootPath: "" },
+      target: { kind: "pattern", containerKey: "/data", pattern: "*.txt" },
     });
   });
 
   test("neither gives a container target", () => {
-    expect(toFileProviderInputs({ path: "/data" }).target).toEqual({
-      kind: "container",
-      key: "/data",
+    expect(toFileProviderInputs({ path: "/data" })).toEqual({
+      config: { rootPath: "" },
+      target: { kind: "container", key: "/data" },
     });
   });
 });
