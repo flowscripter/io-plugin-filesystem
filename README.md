@@ -15,26 +15,38 @@
 - Implements the `IOProviderFactory`/`IOProvider` contract from
   [pluggable-io-framework-api](https://github.com/flowscripter/pluggable-io-framework-api)
   for the local filesystem - both source and sink.
+- Factory for the `file` protocol with the `js` payload kind. Locations are
+  `file:` URLs (`file:///foo` or `file:/foo`) or bare paths, validated by
+  `filesystemLocationSchema` (`path`, plus an optional `filename` for a
+  single entry or a glob `pattern` for matching entries). `toProviderInputs`
+  joins `path` and `filename` with the OS path separator into a
+  `LocationTarget`.
 - Config: `{ rootPath?: string }` (validated with Zod) - `rootPath` is
   optional, defaulting to `""`. All paths passed to provider methods are
   resolved and sandboxed against `rootPath` - a path that would escape it is
   rejected. `rootPath: ""` (or omitted) is an explicit sentinel for "no
   restriction" (full filesystem access), since POSIX `"/"` isn't a
   meaningful "everything" root on Windows (multiple drive letters, no
-  single filesystem root).
-- `list` (recursive, regex-filterable), `getProperties`/`setProperties`
-  (size/lastModified/isFolder plus a `mode` extension property),
-  `delete`, `createFolder`, plain readable/writable streams, and multipart
-  read/write (concurrent byte-range parts written directly to file offsets
-  via a single shared file handle) at a caller-supplied part size -
+  single filesystem root). Locations parsed from strings always use the
+  unrestricted config.
+- `list` (recursive, regex-filterable), `getProperties`
+  (size/lastModified/isContainer plus a `mode` extension property),
+  `setProperties` (`lastModified` plus a `mode` property validated by
+  `filesystemSettablePropertySchema`), `delete`, `createContainer` and
+  `joinKey`.
+- Readable handles implement `RangeReadable` (`readRange(start, end)` with
+  an exclusive `end`). Writable handles implement `ResumableWritable`:
+  resuming appends from the file's current size, reported as `startOffset`.
+- Multipart writes (concurrent byte-range parts written directly to file
+  offsets via a single shared file handle) at a caller-supplied part size -
   `getPartSizeConstraints` reports unconstrained bounds with an 8MB default,
   since the local filesystem imposes no real part-size limits.
 - `canDirectTransfer`/`directCopy`/`directMove`: two `FilesystemIOProvider`
   instances with the same `rootPath` copy/move directly (`cp`/`rename`, with
   an `EXDEV` cross-device fallback to recursive copy+delete) instead of
-  streaming. `supportsRecursiveDirectTransfer` is `true` - a folder
+  streaming. `supportsRecursiveDirectTransfer` is `true` - a directory
   `sourcePath` is copied/moved recursively in one `directCopy`/`directMove`
-  call, preserving empty subfolders.
+  call, preserving empty subdirectories.
 - Bundled (`bun build --target bun`) as a single-file plugin, loaded by
   `dynamic-plugin-framework` via `import()` - proven end to end in this
   repo's tests via a real `LocalFolderPluginRepository`, not just
@@ -50,14 +62,18 @@
 
 Loaded as a [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
 plugin - see that project's docs for how a host application discovers and
-instantiates plugins. Direct usage of the bundle:
+instantiates plugins. Direct usage of the bundle, where `registry` is a
+pluggable-io-framework `ProviderRegistry` (or any `ProviderResolver`):
 
 ```typescript
 import filesystemPlugin, {
   filesystemIOProviderFactory,
 } from "https://unpkg.com/@flowscripter/io-plugin-filesystem/dist/bundle.js";
 
-const provider = await filesystemIOProviderFactory.createProvider({ rootPath: "/data" });
+const provider = await filesystemIOProviderFactory.createProvider(
+  { rootPath: "/data" },
+  { resolver: registry },
+);
 ```
 
 ## Development

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { JsChunk } from "@flowscripter/pluggable-io-framework-api";
+import { type Item, PayloadKind } from "@flowscripter/pluggable-io-framework-api";
 import { FilesystemIOProvider } from "../src/FilesystemIOProvider.ts";
 
 let root: string;
@@ -20,25 +20,27 @@ afterEach(async () => {
 describe("FilesystemIOProvider", () => {
   test("writes then reads back a file", async () => {
     const writable = await provider.getWritableStream("hello.txt");
-    const writer = (writable.stream as WritableStream<JsChunk>).getWriter();
-    await writer.write({ kind: provider.kind, data: new TextEncoder().encode("hello") });
+    const writer = (writable.stream as WritableStream<Item<PayloadKind.Js>>).getWriter();
+    await writer.write({
+      payload: { kind: provider.kind, data: new TextEncoder().encode("hello") },
+    });
     await writer.close();
 
     const readable = await provider.getReadableStream("hello.txt");
-    const reader = (readable.stream as ReadableStream<JsChunk>).getReader();
+    const reader = (readable.stream as ReadableStream<Item<PayloadKind.Js>>).getReader();
     const { value } = await reader.read();
-    expect(new TextDecoder().decode((value as JsChunk).data)).toBe("hello");
+    expect(new TextDecoder().decode(value?.payload.data)).toBe("hello");
   });
 
-  test("getProperties reports size, lastModified and isFolder", async () => {
+  test("getProperties reports size, lastModified and isContainer", async () => {
     await writeFile(join(root, "a.txt"), "abc");
     const properties = await provider.getProperties("a.txt");
     expect(properties.size).toBe(3);
-    expect(properties.isFolder).toBe(false);
+    expect(properties.isContainer).toBe(false);
     expect(properties.lastModified).toBeInstanceOf(Date);
 
     const folderProperties = await provider.getProperties(".");
-    expect(folderProperties.isFolder).toBe(true);
+    expect(folderProperties.isContainer).toBe(true);
     expect(folderProperties.size).toBeUndefined();
   });
 
@@ -62,7 +64,7 @@ describe("FilesystemIOProvider", () => {
       return;
     }
     await writeFile(join(root, "a.txt"), "a");
-    await provider.setProperties("a.txt", { mode: 0o600 });
+    await provider.setProperties("a.txt", { properties: { mode: 0o600 } });
     const properties = await provider.getProperties("a.txt");
     expect((properties.properties.mode as number) & 0o777).toBe(0o600);
   });
@@ -101,7 +103,7 @@ describe("FilesystemIOProvider", () => {
     expect(properties.size).toBe(5);
   });
 
-  test("multipart write then multipart read round-trips a large file", async () => {
+  test("multipart write then ranged reads round-trip a large file", async () => {
     const original = new TextEncoder().encode("x".repeat(30));
     const writer = provider.getMultipartWriter("big.bin", 15);
     async function* parts() {
@@ -113,10 +115,12 @@ describe("FilesystemIOProvider", () => {
         yield {
           index,
           offset: start,
-          kind: provider.kind,
-          stream: new ReadableStream<JsChunk>({
+          kind: PayloadKind.Js as const,
+          stream: new ReadableStream<Item<PayloadKind.Js>>({
             start(controller) {
-              controller.enqueue({ kind: provider.kind, data: original.subarray(start, end) });
+              controller.enqueue({
+                payload: { kind: provider.kind, data: original.subarray(start, end) },
+              });
               controller.close();
             },
           }),
@@ -126,13 +130,17 @@ describe("FilesystemIOProvider", () => {
     }
     await writer.write(parts());
 
+    const readable = await provider.getReadableStream("big.bin");
     const collected: Uint8Array[] = [];
-    for await (const part of provider.getMultipartReader("big.bin", 15)) {
-      const reader = (part.stream as ReadableStream<JsChunk>).getReader();
+    for (const [start, end] of [
+      [0, 15],
+      [15, 30],
+    ] as const) {
+      const reader = (await readable.readRange(start, end)).getReader();
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
-        collected.push(value.data);
+        collected.push(value.payload.data);
       }
     }
     expect(Buffer.concat(collected).toString()).toBe("x".repeat(30));
@@ -172,12 +180,12 @@ describe("FilesystemIOProvider", () => {
     expect(threw).toBe(true);
   });
 
-  test("createFolder creates an empty folder, idempotently", async () => {
-    await provider.createFolder("empty/nested");
+  test("createContainer creates an empty directory, idempotently", async () => {
+    await provider.createContainer("empty/nested");
     const properties = await provider.getProperties("empty/nested");
-    expect(properties.isFolder).toBe(true);
-    // mkdir -p style - calling again on an existing folder must not throw.
-    await provider.createFolder("empty/nested");
+    expect(properties.isContainer).toBe(true);
+    // mkdir -p style - calling again on an existing directory must not throw.
+    await provider.createContainer("empty/nested");
   });
 
   test("getPartSizeConstraints reports unconstrained bounds with an 8MB default", () => {
@@ -192,7 +200,7 @@ describe("FilesystemIOProvider", () => {
     expect(provider.supportsRecursiveDirectTransfer).toBe(true);
   });
 
-  test("directCopy recursively copies a folder, including an empty subfolder", async () => {
+  test("directCopy recursively copies a directory, including an empty subdirectory", async () => {
     await mkdir(join(root, "src"), { recursive: true });
     await writeFile(join(root, "src", "a.txt"), "A");
     await mkdir(join(root, "src", "nested"), { recursive: true });
@@ -203,10 +211,10 @@ describe("FilesystemIOProvider", () => {
 
     expect((await provider.getProperties("dest/a.txt")).size).toBe(1);
     expect((await provider.getProperties("dest/nested/b.txt")).size).toBe(1);
-    expect((await provider.getProperties("dest/emptyDir")).isFolder).toBe(true);
+    expect((await provider.getProperties("dest/emptyDir")).isContainer).toBe(true);
   });
 
-  test("directMove recursively relocates a folder", async () => {
+  test("directMove recursively relocates a directory", async () => {
     await mkdir(join(root, "src"), { recursive: true });
     await writeFile(join(root, "src", "a.txt"), "A");
     await mkdir(join(root, "src", "nested"), { recursive: true });
@@ -231,5 +239,43 @@ describe("FilesystemIOProvider", () => {
 
     const properties = await unrestricted.getProperties(join(root, "outside.txt"));
     expect(properties.size).toBe(5);
+  });
+  test("setProperties applies lastModified and ignores an absent properties bag", async () => {
+    await writeFile(join(root, "a.txt"), "a");
+    const lastModified = new Date(1_000_000_000_000);
+    await provider.setProperties("a.txt", { lastModified });
+    const properties = await provider.getProperties("a.txt");
+    expect(properties.lastModified?.getTime()).toBe(lastModified.getTime());
+  });
+
+  test("setProperties rejects a properties bag that fails settablePropertySchema", async () => {
+    await writeFile(join(root, "a.txt"), "a");
+    await expect(provider.setProperties("a.txt", { properties: { mode: "rw" } })).rejects.toThrow();
+  });
+
+  test("joinKey joins with the OS path separator", () => {
+    expect(provider.joinKey("dir", "a.txt")).toBe(join("dir", "a.txt"));
+  });
+
+  test("a write interrupted after a token is resumed from the committed size", async () => {
+    const first = await provider.getWritableStream("resume.txt");
+    const firstWriter = (first.stream as WritableStream<Item<PayloadKind.Js>>).getWriter();
+    await firstWriter.write({
+      payload: { kind: PayloadKind.Js, data: new TextEncoder().encode("hello ") },
+    });
+    const token = first.resumeToken();
+    await firstWriter.abort(new Error("interrupted"));
+
+    const resumed = await provider.getWritableStream("resume.txt", { resume: token });
+    expect(resumed.startOffset).toBe(6);
+    const writer = (resumed.stream as WritableStream<Item<PayloadKind.Js>>).getWriter();
+    await writer.write({
+      payload: { kind: PayloadKind.Js, data: new TextEncoder().encode("world") },
+    });
+    await writer.close();
+    expect(await Bun.file(join(root, "resume.txt")).text()).toBe("hello world");
+  });
+  test("disposal holds no resources and resolves", async () => {
+    await provider[Symbol.asyncDispose]();
   });
 });
