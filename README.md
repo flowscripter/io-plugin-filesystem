@@ -58,6 +58,20 @@
   found without the consuming CLI needing a direct npm dependency on it -
   also proven end to end in this repo's tests, not just type-checking.
 
+## String and Structured Locations
+
+A `file` location can be given in two forms:
+
+- A string: a `file:` URL (`file:///foo` or `file:/foo`, no host) or a bare
+  path. `parseLocationString` returns only `{ path }`, so a string always
+  addresses the whole `path` as a `container` target. Strings are the
+  convenient form for code holding a path or URL, and the form other
+  providers use when they resolve a `file` location.
+- A structured location object, `{ path, filename?, pattern? }`, validated
+  by `filesystemLocationSchema` directly. It is needed to address a single
+  file (`filename`, an `entry` target) or the files matching a glob
+  (`pattern`, a `pattern` target), which a string cannot express.
+
 ## Bundled Bun Module Usage
 
 Loaded as a [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
