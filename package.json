@@ -1,6 +1,6 @@
 {
   "name": "@flowscripter/io-plugin-filesystem",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Local filesystem source/sink plugin for https://github.com/flowscripter/pluggable-io-framework",
   "keywords": [
     "bun",
@@ -36,15 +36,15 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@flowscripter/pluggable-io-framework-api": "^3.0.0",
+    "@flowscripter/pluggable-io-framework-api": "^3.1.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@flowscripter/dynamic-plugin-framework": "^2.2.15",
+    "@flowscripter/dynamic-plugin-framework": "^2.2.19",
     "@types/bun": "^1.4.2",
-    "@types/node": "^26.6.3",
-    "oxfmt": "0.71.0",
-    "oxlint": "1.86.0"
+    "@types/node": "^26.6.4",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0"
   },
   "peerDependencies": {
     "@flowscripter/dynamic-plugin-framework": "*",
