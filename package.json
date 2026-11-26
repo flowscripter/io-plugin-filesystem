@@ -1,6 +1,6 @@
 {
   "name": "@flowscripter/io-plugin-filesystem",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "description": "Local filesystem source/sink plugin for https://github.com/flowscripter/pluggable-io-framework",
   "keywords": [
     "bun",
